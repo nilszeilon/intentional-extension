@@ -1,8 +1,9 @@
 const IGNORE_KEY = 'ignoredDomains';
 const PAUSE_KEY = 'pausedUntil';
+const AWAY_KEY = 'takeAwayLinks';
 
 function loadOptions() {
-  chrome.storage.local.get([IGNORE_KEY, PAUSE_KEY], result => {
+  chrome.storage.local.get([IGNORE_KEY, PAUSE_KEY, AWAY_KEY], result => {
     const domains = result[IGNORE_KEY] || [];
     const pausedUntil = result[PAUSE_KEY] || 0;
 
@@ -26,6 +27,42 @@ function loadOptions() {
     } else {
       status.textContent = 'Extension is active.';
     }
+
+    // Load Take Me Away links
+    const awayLinks = result[AWAY_KEY] || [];
+    const awayList = document.getElementById('away-links');
+    awayList.innerHTML = '';
+    awayLinks.forEach(link => {
+      const li = document.createElement('li');
+      li.textContent = link + ' ';
+      const btn = document.createElement('button');
+      btn.textContent = 'Remove';
+      btn.onclick = () => removeAwayLink(link);
+      li.appendChild(btn);
+      awayList.appendChild(li);
+    });
+  });
+}
+
+function addAwayLink() {
+  const input = document.getElementById('new-away-link');
+  const link = input.value.trim();
+  if (!link) return;
+  chrome.storage.local.get(AWAY_KEY, result => {
+    const links = result[AWAY_KEY] || [];
+    if (!links.includes(link)) {
+      links.push(link);
+      chrome.storage.local.set({ [AWAY_KEY]: links }, loadOptions);
+    }
+  });
+  input.value = '';
+}
+
+function removeAwayLink(link) {
+  chrome.storage.local.get(AWAY_KEY, result => {
+    let links = result[AWAY_KEY] || [];
+    links = links.filter(l => l !== link);
+    chrome.storage.local.set({ [AWAY_KEY]: links }, loadOptions);
   });
 }
 
@@ -61,5 +98,6 @@ function pauseExtension() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('add-domain').addEventListener('click', addDomain);
   document.getElementById('pause-button').addEventListener('click', pauseExtension);
+  document.getElementById('add-away-link').addEventListener('click', addAwayLink);
   loadOptions();
 });
