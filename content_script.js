@@ -32,8 +32,8 @@
     overlay.id = '__intentionalOverlay';
     Object.assign(overlay.style, {
       position: 'fixed',
-      top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.8)',
+      top: '0', left: '0', right: '0', bottom: '0',
+      backgroundColor: 'rgba(0,0,0,0.9)',
       color: '#fff',
       display: 'flex',
       flexDirection: 'column',
@@ -45,6 +45,7 @@
     const message = document.createElement('div');
     message.style.fontSize = '24px';
     message.style.marginBottom = '20px';
+    message.style.color = '#fff';
 
     if (!last || now - last < interval) {
       // Initial intention prompt
@@ -58,7 +59,9 @@
         fontSize: '18px',
         width: '50%',
         maxWidth: '400px',
-        border: 'none',
+        backgroundColor: '#fff',
+        color: '#000',
+        border: '1px solid #000',
         borderRadius: '4px'
       });
 
@@ -68,7 +71,11 @@
         marginTop: '20px',
         padding: '10px 20px',
         fontSize: '18px',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        backgroundColor: '#fff',
+        color: '#000',
+        border: 'none',
+        borderRadius: '4px'
       });
       confirmBtn.onclick = () => {
         const val = input.value.trim();
@@ -83,6 +90,12 @@
         setTimeout(showPrompt, interval);
       };
 
+      // Allow Enter key to submit intention
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          confirmBtn.click();
+        }
+      });
       overlay.appendChild(message);
       overlay.appendChild(input);
       overlay.appendChild(confirmBtn);
@@ -98,7 +111,11 @@
         margin: '10px',
         padding: '10px 20px',
         fontSize: '18px',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        backgroundColor: '#fff',
+        color: '#000',
+        border: 'none',
+        borderRadius: '4px'
       });
       continueBtn.onclick = () => {
         document.body.removeChild(overlay);
@@ -113,7 +130,11 @@
         margin: '10px',
         padding: '10px 20px',
         fontSize: '18px',
-        cursor: 'pointer'
+        cursor: 'pointer',
+        backgroundColor: '#fff',
+        color: '#000',
+        border: 'none',
+        borderRadius: '4px'
       });
       takeAwayBtn.onclick = () => {
         document.body.removeChild(overlay);
