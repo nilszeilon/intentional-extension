@@ -85,7 +85,16 @@
       const now = Date.now();
       if (settings.pausedUntil && now < settings.pausedUntil) return;
       if (shouldIgnoreDomain(settings.ignored)) return;
-      showPrompt();
+      // Throttle prompts: do not re-prompt on page reload within interval
+      const interval = 15 * 60 * 1000;
+      const last = parseInt(window.sessionStorage.getItem('intentional_lastPrompt'), 10) || 0;
+      if (last && now - last < interval) {
+        // schedule next prompt after remaining time
+        const remaining = interval - (now - last);
+        setTimeout(showPrompt, remaining);
+      } else {
+        showPrompt();
+      }
     });
   }
 
