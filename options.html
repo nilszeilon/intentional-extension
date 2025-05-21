@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Intentional Options</title>
+  <style>
+    body { font-family: sans-serif; margin: 20px; }
+    input, button { padding: 5px; margin: 5px; }
+    #domains li { margin: 5px 0; }
+  </style>
+</head>
+<body>
+  <h1>Intentional Options</h1>
+  <section>
+    <h2>Ignored Domains</h2>
+    <ul id="domains"></ul>
+    <input type="text" id="new-domain" placeholder="example.com">
+    <button id="add-domain">Add</button>
+  </section>
+  <section>
+    <h2>Pause Extension</h2>
+    <label>Pause for minutes: <input type="number" id="pause-minutes" min="1" value="10"></label>
+    <button id="pause-button">Pause</button>
+    <p id="pause-status"></p>
+  </section>
+  <script src="options.js"></script>
+</body>
+</html>
