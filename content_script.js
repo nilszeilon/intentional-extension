@@ -1,7 +1,6 @@
 (function() {
   const IGNORE_KEY = 'ignoredDomains';
   const PAUSE_KEY = 'pausedUntil';
-  const TAKE_AWAY_KEY = 'takeAwayLinks';
 
   function getSettings(callback) {
     chrome.storage.local.get([IGNORE_KEY, PAUSE_KEY], (result) => {
@@ -139,13 +138,8 @@
       takeAwayBtn.onclick = () => {
         document.body.removeChild(overlay);
         window.__intentionalPromptActive = false;
-        chrome.storage.local.get([TAKE_AWAY_KEY], result => {
-          const links = result[TAKE_AWAY_KEY] || [];
-          const url = links.length > 0
-            ? links[Math.floor(Math.random() * links.length)]
-            : 'about:newtab';
-          window.location.href = url;
-        });
+        // Close this tab via background
+        chrome.runtime.sendMessage({ action: 'takeAway' });
       };
 
       overlay.appendChild(message);
