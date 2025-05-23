@@ -1,18 +1,19 @@
 (function() {
-  const IGNORE_KEY = 'ignoredDomains';
+  const INCLUDE_KEY = 'includedDomains';
   const PAUSE_KEY = 'pausedUntil';
 
   function getSettings(callback) {
-    chrome.storage.local.get([IGNORE_KEY, PAUSE_KEY], (result) => {
-      const ignored = result[IGNORE_KEY] || [];
+    chrome.storage.local.get([INCLUDE_KEY, PAUSE_KEY], (result) => {
+      const included = result[INCLUDE_KEY] || [];
       const pausedUntil = result[PAUSE_KEY] || 0;
-      callback({ ignored, pausedUntil });
+      callback({ included, pausedUntil });
     });
   }
 
-  function shouldIgnoreDomain(ignored) {
+  function shouldIncludeDomain(included) {
     const hostname = window.location.hostname;
-    return ignored.some(domain =>
+    if (!included || included.length === 0) return true;
+    return included.some(domain =>
       hostname === domain || hostname.endsWith('.' + domain)
     );
   }
@@ -26,6 +27,17 @@
     const now = Date.now();
     const last = parseInt(window.sessionStorage.getItem('intentional_lastPrompt'), 10) || 0;
     const lastIntention = window.sessionStorage.getItem('intentional_lastIntention') || '';
+    // Zen messages cycling
+    const zenMessages = [
+      'Time is precious. Leave now and reclaim your day.',
+      'Your real life awaits. Close this tab and find peace.',
+      'Every moment online is a moment lost. Save time by leaving.',
+      'Less scrolling, more living. Leave now.',
+      'Don’t let the internet steal your time. Close this tab.'
+    ];
+    let zenIndex = parseInt(window.sessionStorage.getItem('intentional_zenIndex'), 10) || 0;
+    const zenMessage = zenMessages[zenIndex % zenMessages.length];
+    window.sessionStorage.setItem('intentional_zenIndex', zenIndex + 1);
 
     const overlay = document.createElement('div');
     overlay.id = '__intentionalOverlay';
@@ -40,6 +52,16 @@
       alignItems: 'center',
       zIndex: 2147483647
     });
+    // Allow Escape key to immediately close tab
+    function handleEscape(e) {
+      if (e.key === 'Escape') {
+        if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+        window.__intentionalPromptActive = false;
+        chrome.runtime.sendMessage({ action: 'takeAway' });
+        document.removeEventListener('keydown', handleEscape);
+      }
+    }
+    document.addEventListener('keydown', handleEscape);
 
     const message = document.createElement('div');
     message.style.fontSize = '24px';
@@ -77,6 +99,7 @@
         borderRadius: '4px'
       });
       confirmBtn.onclick = () => {
+        document.removeEventListener('keydown', handleEscape);
         const val = input.value.trim();
         if (!val) {
           alert('Please enter your intention.');
@@ -97,7 +120,41 @@
       });
       overlay.appendChild(message);
       overlay.appendChild(input);
+
+      // Display a zen message encouraging to leave
+      const zenDiv = document.createElement('div');
+      zenDiv.textContent = zenMessage;
+      Object.assign(zenDiv.style, {
+        color: '#ccc',
+        margin: '10px',
+        fontSize: '16px',
+        fontStyle: 'italic'
+      });
+      overlay.appendChild(zenDiv);
+
       overlay.appendChild(confirmBtn);
+
+      // Add option to close tab immediately
+      const leaveBtn = document.createElement('button');
+      leaveBtn.textContent = 'Take me away';
+      Object.assign(leaveBtn.style, {
+        marginTop: '20px',
+        padding: '10px 20px',
+        fontSize: '18px',
+        cursor: 'pointer',
+        backgroundColor: '#fff',
+        color: '#000',
+        border: 'none',
+        borderRadius: '4px'
+      });
+      leaveBtn.onclick = () => {
+        document.removeEventListener('keydown', handleEscape);
+        document.body.removeChild(overlay);
+        window.__intentionalPromptActive = false;
+        chrome.runtime.sendMessage({ action: 'takeAway' });
+      };
+      overlay.appendChild(leaveBtn);
+
       document.body.appendChild(overlay);
       input.focus();
     } else {
@@ -117,6 +174,7 @@
         borderRadius: '4px'
       });
       continueBtn.onclick = () => {
+        document.removeEventListener('keydown', handleEscape);
         document.body.removeChild(overlay);
         window.__intentionalPromptActive = false;
         window.sessionStorage.setItem('intentional_lastPrompt', Date.now());
@@ -136,6 +194,7 @@
         borderRadius: '4px'
       });
       takeAwayBtn.onclick = () => {
+        document.removeEventListener('keydown', handleEscape);
         document.body.removeChild(overlay);
         window.__intentionalPromptActive = false;
         // Close this tab via background
@@ -143,6 +202,18 @@
       };
 
       overlay.appendChild(message);
+
+      // Display a zen message encouraging to leave
+      const zenDiv = document.createElement('div');
+      zenDiv.textContent = zenMessage;
+      Object.assign(zenDiv.style, {
+        color: '#ccc',
+        margin: '10px',
+        fontSize: '16px',
+        fontStyle: 'italic'
+      });
+      overlay.appendChild(zenDiv);
+
       overlay.appendChild(continueBtn);
       overlay.appendChild(takeAwayBtn);
       document.body.appendChild(overlay);
@@ -153,7 +224,7 @@
     getSettings(settings => {
       const now = Date.now();
       if (settings.pausedUntil && now < settings.pausedUntil) return;
-      if (shouldIgnoreDomain(settings.ignored)) return;
+      if (!shouldIncludeDomain(settings.included)) return;
       // Throttle prompts: do not re-prompt on page reload within interval
       const interval = 15 * 60 * 1000;
       const last = parseInt(window.sessionStorage.getItem('intentional_lastPrompt'), 10) || 0;

@@ -1,9 +1,9 @@
-const IGNORE_KEY = 'ignoredDomains';
+const INCLUDE_KEY = 'includedDomains';
 const PAUSE_KEY = 'pausedUntil';
 
 function loadOptions() {
-  chrome.storage.local.get([IGNORE_KEY, PAUSE_KEY], result => {
-    const domains = result[IGNORE_KEY] || [];
+  chrome.storage.local.get([INCLUDE_KEY, PAUSE_KEY], result => {
+    const domains = result[INCLUDE_KEY] || [];
     const pausedUntil = result[PAUSE_KEY] || 0;
 
     const domainsList = document.getElementById('domains');
@@ -35,21 +35,21 @@ function addDomain() {
   const input = document.getElementById('new-domain');
   const domain = input.value.trim();
   if (!domain) return;
-  chrome.storage.local.get(IGNORE_KEY, result => {
-    const domains = result[IGNORE_KEY] || [];
+  chrome.storage.local.get(INCLUDE_KEY, result => {
+    const domains = result[INCLUDE_KEY] || [];
     if (!domains.includes(domain)) {
       domains.push(domain);
-      chrome.storage.local.set({ [IGNORE_KEY]: domains }, loadOptions);
+      chrome.storage.local.set({ [INCLUDE_KEY]: domains }, loadOptions);
     }
   });
   input.value = '';
 }
 
 function removeDomain(domain) {
-  chrome.storage.local.get(IGNORE_KEY, result => {
-    let domains = result[IGNORE_KEY] || [];
+  chrome.storage.local.get(INCLUDE_KEY, result => {
+    let domains = result[INCLUDE_KEY] || [];
     domains = domains.filter(d => d !== domain);
-    chrome.storage.local.set({ [IGNORE_KEY]: domains }, loadOptions);
+    chrome.storage.local.set({ [INCLUDE_KEY]: domains }, loadOptions);
   });
 }
 
